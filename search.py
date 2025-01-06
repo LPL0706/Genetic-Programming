@@ -118,28 +118,28 @@ def fitness_sharpe(individual, data, toolbox, window=10):
                     window_data = df.loc[:date].tail(window)
                     
                     factor_value = compiled_expr(
-                        window_data['PriceMomentum5'].values,
-                        window_data['VolumeMomentum5'].values,
-                        window_data['Volatility5'].values,
-                        window_data['PriceVolumeCorr5'].values,
-                        window_data['Channel5'].values,
-                        window_data['RSI5'].values,
-                        window_data['Bollinger5'].values,
-                        window_data['PriceMomentum10'].values,
-                        window_data['VolumeMomentum10'].values,
-                        window_data['Volatility10'].values,
-                        window_data['PriceVolumeCorr10'].values,
-                        window_data['Channel10'].values,
-                        window_data['RSI10'].values,
-                        window_data['Bollinger10'].values,
-                        window_data['VolumeImbalance'].values,
-                        window_data['High'].values,
-                        window_data['Open'].values,
-                        window_data['Low'].values,
-                        window_data['Close'].values,
-                        window_data['Volume'].values,
+                        window_data['PriceMomentum5'],
+                        window_data['VolumeMomentum5'],
+                        window_data['Volatility5'],
+                        window_data['PriceVolumeCorr5'],
+                        window_data['Channel5'],
+                        window_data['RSI5'],
+                        window_data['Bollinger5'],
+                        window_data['PriceMomentum10'],
+                        window_data['VolumeMomentum10'],
+                        window_data['Volatility10'],
+                        window_data['PriceVolumeCorr10'],
+                        window_data['Channel10'],
+                        window_data['RSI10'],
+                        window_data['Bollinger10'],
+                        window_data['VolumeImbalance'],
+                        window_data['High'],
+                        window_data['Open'],
+                        window_data['Low'],
+                        window_data['Close'],
+                        window_data['Volume']
                     )
-                    daily_returns.append((ticker, factor_value, df.loc[date, 'Return']))
+                    daily_returns.append((ticker, factor_value.iloc[-1], df.loc[date, 'Return']))
             
             if len(daily_returns) >= 40:
                 daily_returns = sorted(daily_returns, key=lambda x: x[1])
@@ -149,7 +149,7 @@ def fitness_sharpe(individual, data, toolbox, window=10):
                 portfolio_returns.append(portfolio_return)
         except Exception as e:
             continue
-
+            
     if len(portfolio_returns) > 0:
         mean_return = np.mean(portfolio_returns)
         std_return = np.std(portfolio_returns)
