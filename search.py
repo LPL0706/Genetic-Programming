@@ -106,6 +106,58 @@ def fitness_ic(individual, data, toolbox, window=10):
 
     return np.nanmean(all_ic) if all_ic else 0,
 
+def fitness_sharpe(individual, data, toolbox, window=10):
+    compiled_expr = toolbox.compile(expr=individual)
+    portfolio_returns = []
+
+    for date in data[list(data.keys())[0]].index[window:]:
+        try:
+            daily_returns = []
+            for ticker, df in data.items():
+                if date in df.index:
+                    window_data = df.loc[:date].tail(window)
+                    
+                    factor_value = compiled_expr(
+                        window_data['PriceMomentum5'].values,
+                        window_data['VolumeMomentum5'].values,
+                        window_data['Volatility5'].values,
+                        window_data['PriceVolumeCorr5'].values,
+                        window_data['Channel5'].values,
+                        window_data['RSI5'].values,
+                        window_data['Bollinger5'].values,
+                        window_data['PriceMomentum10'].values,
+                        window_data['VolumeMomentum10'].values,
+                        window_data['Volatility10'].values,
+                        window_data['PriceVolumeCorr10'].values,
+                        window_data['Channel10'].values,
+                        window_data['RSI10'].values,
+                        window_data['Bollinger10'].values,
+                        window_data['VolumeImbalance'].values,
+                        window_data['High'].values,
+                        window_data['Open'].values,
+                        window_data['Low'].values,
+                        window_data['Close'].values,
+                        window_data['Volume'].values,
+                    )
+                    daily_returns.append((ticker, factor_value, df.loc[date, 'Return']))
+            
+            if len(daily_returns) >= 40:
+                daily_returns = sorted(daily_returns, key=lambda x: x[1])
+                long_portfolio = [x[2] for x in daily_returns[-20:]]
+                short_portfolio = [x[2] for x in daily_returns[:20]]
+                portfolio_return = np.mean(long_portfolio) - np.mean(short_portfolio)
+                portfolio_returns.append(portfolio_return)
+        except Exception as e:
+            continue
+
+    if len(portfolio_returns) > 0:
+        mean_return = np.mean(portfolio_returns)
+        std_return = np.std(portfolio_returns)
+        sharpe_ratio = mean_return / std_return if std_return != 0 else 0
+        return sharpe_ratio,
+    else:
+        return 0,
+
 def run_evolution(population, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose=True):
     logbook = tools.Logbook()
     logbook.header = ['gen', 'nevals'] + (stats.fields if stats else [])
