@@ -58,7 +58,7 @@ def setup():
     toolbox.register("select", tools.selTournament, tournsize=3)
     return toolbox, pset
 
-def fitness(individual, data, toolbox, window=10):
+def fitness_ic(individual, data, toolbox, window=10):
     compiled_expr = toolbox.compile(expr=individual)
     all_ic = []
 
@@ -162,7 +162,7 @@ def run(data, n=100, generations=50, cxpb=0.7, mutpb=0.3):
     generations = generations
     hof = tools.HallOfFame(1)
 
-    fitness_func = partial(fitness, data=processed_data, toolbox=toolbox)
+    fitness_func = partial(fitness_sharpe, data=processed_data, toolbox=toolbox)
     toolbox.register("evaluate", fitness_func)
     
     run_evolution(population, toolbox, cxpb=cxpb, mutpb=mutpb, ngen=generations, stats=None, halloffame=hof, verbose=True)
