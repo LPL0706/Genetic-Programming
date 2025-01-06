@@ -18,7 +18,7 @@ def setup():
         ARG10="PriceVolumeCorr10", ARG11="Channel10", ARG12="RSI10", ARG13="Bollinger10",
         ARG14="VolumeImbalance", ARG15="High", ARG16="Open", ARG17="Low", ARG18="Close", ARG19="Volume"
     )
-    
+    '''
     pset.addPrimitive(np.add, 2, name="add")
     pset.addPrimitive(np.subtract, 2, name="subtract")
     pset.addPrimitive(np.multiply, 2, name="multiply")
@@ -27,6 +27,7 @@ def setup():
     pset.addPrimitive(np.sqrt, 1, name="sqrt")
     pset.addPrimitive(np.maximum, 2, name="max")
     pset.addPrimitive(np.minimum, 2, name="min")
+    '''
     
     pset.addPrimitive(lambda x: ts_mean(x, 5), 1, name="ts_mean_5")
     pset.addPrimitive(lambda x: ts_std(x, 5), 1, name="ts_std_5")
@@ -47,7 +48,7 @@ def setup():
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
     creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax)
     toolbox = base.Toolbox()
-    toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=2, max_=4)
+    toolbox.register("expr", gp.genHalfAndHalf, pset=pset, min_=2, max_=3)
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("compile", gp.compile, pset=pset)
@@ -57,39 +58,42 @@ def setup():
     toolbox.register("select", tools.selTournament, tournsize=3)
     return toolbox, pset
 
-def fitness(individual, data, toolbox):
+def fitness(individual, data, toolbox, window=10):
     compiled_expr = toolbox.compile(expr=individual)
     all_ic = []
-    
+
     for date in data[list(data.keys())[0]].index:
         try:
             cross_section = []
             
             for ticker, df in data.items():
                 if date in df.index:
+                    window_data = df.loc[:date].tail(window)
+
                     feature_values = compiled_expr(
-                        df.loc[date, 'PriceMomentum5'],
-                        df.loc[date, 'VolumeMomentum5'],
-                        df.loc[date, 'Volatility5'],
-                        df.loc[date, 'PriceVolumeCorr5'],
-                        df.loc[date, 'Channel5'],
-                        df.loc[date, 'RSI5'],
-                        df.loc[date, 'Bollinger5'],
-                        df.loc[date, 'PriceMomentum10'],
-                        df.loc[date, 'VolumeMomentum10'],
-                        df.loc[date, 'Volatility10'],
-                        df.loc[date, 'PriceVolumeCorr10'],
-                        df.loc[date, 'Channel10'],
-                        df.loc[date, 'RSI10'],
-                        df.loc[date, 'Bollinger10'],
-                        df.loc[date, 'VolumeImbalance'],
-                        df.loc[date, 'High'],
-                        df.loc[date, 'Open'],
-                        df.loc[date, 'Low'],
-                        df.loc[date, 'Close'],
-                        df.loc[date, 'Volume']
+                        window_data['PriceMomentum5'],
+                        window_data['VolumeMomentum5'],
+                        window_data['Volatility5'],
+                        window_data['PriceVolumeCorr5'],
+                        window_data['Channel5'],
+                        window_data['RSI5'],
+                        window_data['Bollinger5'],
+                        window_data['PriceMomentum10'],
+                        window_data['VolumeMomentum10'],
+                        window_data['Volatility10'],
+                        window_data['PriceVolumeCorr10'],
+                        window_data['Channel10'],
+                        window_data['RSI10'],
+                        window_data['Bollinger10'],
+                        window_data['VolumeImbalance'],
+                        window_data['High'],
+                        window_data['Open'],
+                        window_data['Low'],
+                        window_data['Close'],
+                        window_data['Volume']
                     )
-                    cross_section.append((feature_values, df.loc[date, 'Return']))
+
+                    cross_section.append((feature_values.iloc[-1], df.loc[date, 'Return']))
             
             if len(cross_section) > 1:
                 features, targets = zip(*cross_section)
@@ -99,7 +103,7 @@ def fitness(individual, data, toolbox):
         
         except Exception as e:
             continue
-    
+
     return np.nanmean(all_ic) if all_ic else 0,
 
 def run_evolution(population, toolbox, cxpb, mutpb, ngen, stats=None, halloffame=None, verbose=True):
