@@ -173,12 +173,14 @@ def refine_global_optimize(processed_data, alphas, iterations=10):
 def grid_search_optimize(processed_data, alphas, step=0.1):
     alpha_names = list(alphas.keys())
     num_alphas = len(alpha_names)
-    weight_range = np.arange(0, 1.1, step)
+    weight_range = np.arange(0, 1 + step, step)
 
     best_weights = None
     best_sharpe = -np.inf
 
-    for weights in product(weight_range, repeat=num_alphas):
+    total_combinations = len(weight_range) ** num_alphas
+
+    for weights in tqdm(product(weight_range, repeat=num_alphas), total=total_combinations, desc="Grid Search Progress"):
         weights = np.array(weights)
         if not np.isclose(weights.sum(), 1):
             continue
@@ -189,5 +191,6 @@ def grid_search_optimize(processed_data, alphas, step=0.1):
         if sharpe_ratio > best_sharpe:
             best_sharpe = sharpe_ratio
             best_weights = weights
-
+            
+    best_weights /= np.sum(best_weights)
     return best_weights, best_sharpe
