@@ -2,6 +2,7 @@ from scipy.optimize import minimize
 from itertools import product
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 def scale(series):
     min_val = series.min()
